@@ -34,11 +34,38 @@ var pegsCollisionGroup = Matter.Body.nextGroup(true);
 // Counter for balls hitting the ground
 var ballHits = 0;
 
+// Initialize user's balance
+var userBalance = 1000; // Set an initial balance, you can adjust this as needed
+
+// Create and append HTML element for input field and user balance display
+var betInput = document.createElement('input');
+betInput.id = 'betInput';
+betInput.type = 'number';
+betInput.placeholder = 'Enter bet amount';
+betInput.style.position = 'absolute';
+betInput.style.top = '50px';
+betInput.style.left = '20px';
+document.body.appendChild(betInput);
+
+var userBalanceDisplay = document.createElement('div');
+userBalanceDisplay.id = 'userBalanceDisplay';
+userBalanceDisplay.style.position = 'absolute';
+userBalanceDisplay.style.top = '80px';
+userBalanceDisplay.style.left = '20px';
+userBalanceDisplay.style.color = 'white';
+userBalanceDisplay.innerText = 'Balance: $' + userBalance.toFixed(2);
+document.body.appendChild(userBalanceDisplay);
+
+// Function to update user balance display
+function updateUserBalanceDisplay() {
+    userBalanceDisplay.innerText = 'Balance: $' + userBalance.toFixed(2);
+}
+
 // Function to create a row of pegs
 function createPegRow(x, y, row, count) {
     var pegs = [];
-    var pegWidth = 12;
-    var pegSpacing = 70;
+    var pegWidth = 15;
+    var pegSpacing = 80;
     var startX = x - ((count - 1) * pegSpacing) / 2;
     for (var i = 0; i < count; i++) {
         // Generate unique ID for each peg
@@ -50,7 +77,7 @@ function createPegRow(x, y, row, count) {
             y: y,
             radius: pegWidth / 2,
             isStatic: true,
-            restitution: 100,
+            restitution: 1,
             collisionFilter: { group: pegsCollisionGroup }
         };
         pegs.push(peg);
@@ -59,7 +86,7 @@ function createPegRow(x, y, row, count) {
 }
 
 // Create peg rows in pyramid shape
-var numRows = 8;
+var numRows = 10;
 var startX = window.innerWidth / 2;
 var startY = 100;
 for (var row = 0; row < numRows; row++) {
@@ -81,25 +108,40 @@ var exitBoxes = [];
 var exitBoxWidth = 50;
 var exitBoxHeight = 20;
 var exitBoxCounters = []; // Counters for each exit box
+var exitBoxMultipliers = [21, 7.5, 3, 0.9, 0.22, 0.16, 0.22, 0.9, 3, 7.5, 21]; // Multipliers for each exit box
 var exitBoxPositions = [
-    { x: startX - 280, y: startY + (numRows - 1) * 75 + 25 },
-    { x: startX - 210, y: startY + (numRows - 1) * 75 + 25 },
-    { x: startX - 140, y: startY + (numRows - 1) * 75 + 25 },
-    { x: startX - 70, y: startY + (numRows - 1) * 75 + 25 },
-    { x: startX  , y: startY + (numRows - 1) * 75 + 25 },
-    { x: startX + 70, y: startY + (numRows - 1) * 75 + 25 },
-    { x: startX + 140, y: startY + (numRows - 1) * 75 + 25 },
-    { x: startX + 210, y: startY + (numRows - 1) * 75 + 25 },
-    { x: startX + 280, y: startY + (numRows - 1) * 75 + 25 }
+    { x: startX - 400, y: startY + (numRows - 1) * 75 + 25 },
+    { x: startX - 320, y: startY + (numRows - 1) * 75 + 25 },
+    { x: startX - 240, y: startY + (numRows - 1) * 75 + 25 },
+    { x: startX - 160, y: startY + (numRows - 1) * 75 + 25 },
+    { x: startX - 80, y: startY + (numRows - 1) * 75 + 25 },
+    { x: startX , y: startY + (numRows - 1) * 75 + 25 },
+    { x: startX + 80, y: startY + (numRows - 1) * 75 + 25 },
+    { x: startX + 160, y: startY + (numRows - 1) * 75 + 25 },
+    { x: startX + 240, y: startY + (numRows - 1) * 75 + 25 },
+    { x: startX + 320, y: startY + (numRows - 1) * 75 + 25 },
+    { x: startX + 400, y: startY + (numRows - 1) * 75 + 25 }
 ];
 
-exitBoxPositions.forEach(function(position) {
-    var exitBox = Bodies.rectangle(position.x, position.y, exitBoxWidth, exitBoxHeight, { isStatic: true, label: 'ExitBox' });
+exitBoxPositions.forEach(function(position, index) {
+    var exitBox = Bodies.rectangle(position.x, position.y, exitBoxWidth, exitBoxHeight, { isStatic: true, label: 'ExitBox', multiplier: exitBoxMultipliers[index] });
     exitBoxes.push(exitBox);
     Composite.add(engine.world, exitBox);
 
     // Initialize counters for each exit box
     exitBoxCounters.push(0);
+
+    // Create text element for displaying the multiplier inside the exit box
+    var multiplierText = document.createElement('div');
+    multiplierText.classList.add('multiplier-text');
+    multiplierText.innerText = 'x' + exitBoxMultipliers[index];
+    multiplierText.style.position = 'absolute';
+    multiplierText.style.top = position.y + 'px';
+    multiplierText.style.left = position.x + 'px';
+    multiplierText.style.color = 'white';
+    multiplierText.style.fontSize = '12px';
+    multiplierText.style.transform = 'translate(-50%, -50%)'; // Center the text
+    document.body.appendChild(multiplierText);
 });
 
 // Event listener for collisions with exit boxes
@@ -108,6 +150,9 @@ Events.on(engine, 'collisionStart', function(event) {
     pairs.forEach(function(pair) {
         // Check if a ball collided with an exit box
         if (pair.bodyA.label === 'ExitBox' && balls.includes(pair.bodyB)) {
+            // Multiply the original bet amount by the multiplier and add it back to user's balance
+            userBalance += pair.bodyB.betAmount * pair.bodyA.multiplier;
+            updateUserBalanceDisplay();
             removeBall(pair.bodyB);
             // Find the index of the exit box
             var exitBoxIndex = exitBoxes.indexOf(pair.bodyA);
@@ -116,6 +161,9 @@ Events.on(engine, 'collisionStart', function(event) {
                 exitBoxCounters[exitBoxIndex]++;
             }
         } else if (pair.bodyB.label === 'ExitBox' && balls.includes(pair.bodyA)) {
+            // Multiply the original bet amount by the multiplier and add it back to user's balance
+            userBalance += pair.bodyA.betAmount * pair.bodyB.multiplier;
+            updateUserBalanceDisplay();
             removeBall(pair.bodyA);
             // Find the index of the exit box
             var exitBoxIndex = exitBoxes.indexOf(pair.bodyB);
@@ -128,6 +176,7 @@ Events.on(engine, 'collisionStart', function(event) {
     // Update all exit box counters after collision
     updateAllExitBoxCounters();
 });
+
 
 // Function to remove a ball from the physics world and the array
 function removeBall(ball) {
@@ -171,7 +220,7 @@ exitBoxCounters.forEach(function(counter, index) {
     percentageDisplay.style.color = 'white';
     percentageDisplay.innerText = '(' + ((exitBoxCounters[index] / ballHits) * 100).toFixed(2) + '%)';
     exitBoxCounter.appendChild(percentageDisplay);
-});
+ });
 
 // Add all bodies to the world
 Composite.add(engine.world, [ground]);
@@ -196,20 +245,20 @@ function updateBallGravity() {
 
         // Strength of gravity
         var gravityStrength = 0.001; // Base strength
-        if (odds < 0.2) {
-            gravityStrength *= 5; // Increase strength for lower odds
-        } else if (odds < 0.5) {
-            gravityStrength *= 2; // Increase strength for moderate odds
+        if (odds < 0.9) {
+            gravityStrength *= 0.5; // Increase strength for lower odds
+        } else if (odds < 1) {
+            gravityStrength *= 1; // Increase strength for moderate odds
         }
 
         // Direction of gravity
         var gravityX = 0; // Initialize gravity along X-axis
         if (Math.random() < 0.5) {
-            // Apply rightward gravity
-            gravityX = gravityStrength * (0.5 + Math.random() * 0.5); // Limit range to center
+            // Apply rightward gravity, biased towards the lower multiplier areas
+            gravityX = gravityStrength * (Math.random() * 0.02); // Bias towards the center
         } else {
-            // Apply leftward gravity
-            gravityX = -gravityStrength * (0.5 + Math.random() * 0.5); // Limit range to center
+            // Apply leftward gravity, biased towards the lower multiplier areas
+            gravityX = -gravityStrength * (Math.random() * 0.02); // Bias towards the center
         }
 
         // Apply customized gravity to the engine
@@ -225,10 +274,24 @@ Events.on(runner, 'tick', function(event) {
 // Event listener for spacebar press
 document.addEventListener('keydown', function(event) {
     if (event.code === 'Space') {
-        // Spawn a new ball at the top center of the screen
-        var ball = Bodies.circle(window.innerWidth / 2, 0, 20, { restitution: 0.5, collisionFilter: { group: ballCollisionGroup } });
-        balls.push(ball); // Add ball to array
-        Composite.add(engine.world, ball);
+        var betAmount = parseFloat(betInput.value);
+        if (!isNaN(betAmount) && betAmount > 0 && userBalance >= betAmount) {
+            // Deduct the bet amount from user's balance
+            userBalance -= betAmount;
+            updateUserBalanceDisplay();
+
+            // Spawn a new ball at the top center of the screen
+            var ball = Bodies.circle(window.innerWidth / 2, 0, 20, {
+                restitution: 0.5,
+                collisionFilter: { group: ballCollisionGroup },
+                betAmount: betAmount // Add a property to store the bet amount with the ball
+            });
+            balls.push(ball); // Add ball to array
+            Composite.add(engine.world, ball);
+        } else {
+            // Notify user if bet amount is invalid or exceeds balance
+            alert('Invalid bet amount or insufficient balance.');
+        }
     }
 });
 
