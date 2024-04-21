@@ -22,22 +22,22 @@ var render = Render.create({
 //Makes the ground
 var ground = Bodies.rectangle(window.innerWidth / 2, window.innerHeight - 20, window.innerWidth, 40, { isStatic: true });
 
-// Array to store balls
+//An array to store each ball created 
 var balls = [];
 
-// Collision group for balls
+//Collision group for balls
 var ballCollisionGroup = Matter.Body.nextGroup(true);
 
-// Collision group for pegs
+//Collision group for pegs
 var pegsCollisionGroup = Matter.Body.nextGroup(true);
 
-// Counter for balls hitting the ground
+//Counter for ball hits
 var ballHits = 0;
 
-// Initialize user's balance
-var userBalance = 1000; // Set an initial balance, you can adjust this as needed
+//Initialize user balance
+var userBalance = 1000; 
 
-// Create and append HTML element for input field and user balance display
+//Creates the html element for user display and input field
 var betInput = document.createElement('input');
 betInput.id = 'betInput';
 betInput.type = 'number';
@@ -56,7 +56,7 @@ userBalanceDisplay.style.color = 'white';
 userBalanceDisplay.innerText = 'Balance: $' + userBalance.toFixed(2);
 document.body.appendChild(userBalanceDisplay);
 
-// Function to update user balance display
+//Function to update user balance display
 function updateUserBalanceDisplay() {
     userBalanceDisplay.innerText = 'Balance: $' + userBalance.toFixed(2);
 }
@@ -68,9 +68,9 @@ function createPegRow(x, y, row, count) {
     var pegSpacing = 80;
     var startX = x - ((count - 1) * pegSpacing) / 2;
     for (var i = 0; i < count; i++) {
-        // Generate unique ID for each peg
+        //Generate unique ID for each peg
         var pegID = String.fromCharCode(65 + row) + (i + 1);
-        // Create peg object with unique ID and properties
+        //Create peg object with unique ID and properties
         var peg = {
             id: pegID,
             x: startX + i * pegSpacing,
@@ -85,14 +85,14 @@ function createPegRow(x, y, row, count) {
     return pegs;
 }
 
-// Create peg rows in pyramid shape
+//Create peg rows in pyramid like shape
 var numRows = 10;
 var startX = window.innerWidth / 2;
 var startY = 100;
 for (var row = 0; row < numRows; row++) {
     var numPegs = 3 + row;
     var pegs = createPegRow(startX, startY + row * 75, row, numPegs);
-    // Create peg bodies and add them to the world
+    //Create peg bodies and add them to the world
     pegs.forEach(function(peg) {
         var pegBody = Bodies.circle(peg.x, peg.y, peg.radius, {
             isStatic: peg.isStatic,
@@ -107,8 +107,8 @@ for (var row = 0; row < numRows; row++) {
 var exitBoxes = [];
 var exitBoxWidth = 50;
 var exitBoxHeight = 20;
-var exitBoxCounters = []; // Counters for each exit box
-var exitBoxMultipliers = [21, 7.5, 3, 0.9, 0.22, 0.16, 0.22, 0.9, 3, 7.5, 21]; // Multipliers for each exit box
+var exitBoxCounters = []; 
+var exitBoxMultipliers = [21, 7.5, 3, 0.9, 0.22, 0.16, 0.22, 0.9, 3, 7.5, 21]; //Multipliers for each exit box
 var exitBoxPositions = [
     { x: startX - 400, y: startY + (numRows - 1) * 75 + 25 },
     { x: startX - 320, y: startY + (numRows - 1) * 75 + 25 },
@@ -128,10 +128,10 @@ exitBoxPositions.forEach(function(position, index) {
     exitBoxes.push(exitBox);
     Composite.add(engine.world, exitBox);
 
-    // Initialize counters for each exit box
+    //Initialize counters for each exit box
     exitBoxCounters.push(0);
 
-    // Create text element for displaying the multiplier inside the exit box
+    //Text elemetn for displaying multiplier inside of each box
     var multiplierText = document.createElement('div');
     multiplierText.classList.add('multiplier-text');
     multiplierText.innerText = 'x' + exitBoxMultipliers[index];
@@ -140,45 +140,43 @@ exitBoxPositions.forEach(function(position, index) {
     multiplierText.style.left = position.x + 'px';
     multiplierText.style.color = 'white';
     multiplierText.style.fontSize = '12px';
-    multiplierText.style.transform = 'translate(-50%, -50%)'; // Center the text
+    multiplierText.style.transform = 'translate(-50%, -50%)'; 
     document.body.appendChild(multiplierText);
 });
 
-// Event listener for collisions with exit boxes
+//Event listener for exit box collisions 
 Events.on(engine, 'collisionStart', function(event) {
     var pairs = event.pairs;
     pairs.forEach(function(pair) {
-        // Check if a ball collided with an exit box
+        //Checks if a ball collided with an exit box
         if (pair.bodyA.label === 'ExitBox' && balls.includes(pair.bodyB)) {
-            // Multiply the original bet amount by the multiplier and add it back to user's balance
+            //Multiply the original bet amount by the multiplier and add it back to user's balance
             userBalance += pair.bodyB.betAmount * pair.bodyA.multiplier;
             updateUserBalanceDisplay();
             removeBall(pair.bodyB);
-            // Find the index of the exit box
             var exitBoxIndex = exitBoxes.indexOf(pair.bodyA);
             if (exitBoxIndex !== -1) {
-                // Increment the counter for the corresponding exit box
                 exitBoxCounters[exitBoxIndex]++;
             }
         } else if (pair.bodyB.label === 'ExitBox' && balls.includes(pair.bodyA)) {
-            // Multiply the original bet amount by the multiplier and add it back to user's balance
+            //Multiply the original bet amount by the multiplier and add it back to user's balance
             userBalance += pair.bodyA.betAmount * pair.bodyB.multiplier;
             updateUserBalanceDisplay();
             removeBall(pair.bodyA);
-            // Find the index of the exit box
+            //Finds the index of the exit box
             var exitBoxIndex = exitBoxes.indexOf(pair.bodyB);
             if (exitBoxIndex !== -1) {
-                // Increment the counter for the corresponding exit box
+                //Increments the counter for the corresponding exit box
                 exitBoxCounters[exitBoxIndex]++;
             }
         }
     });
-    // Update all exit box counters after collision
+    //Update all exit box counters after collision
     updateAllExitBoxCounters();
 });
 
 
-// Function to remove a ball from the physics world and the array
+//Function to remove a ball from the physics world and the array
 function removeBall(ball) {
     var ballIndex = balls.indexOf(ball);
     if (ballIndex !== -1) {
@@ -190,29 +188,29 @@ function removeBall(ball) {
     }
 }
 
-// Function to update counter display for each exit box
+//Function to update counter display for each exit box
 function updateExitBoxCounter(index) {
-    // Update the HTML element displaying the counter for the exit box
+    //Updates the element displaying the counter for the exit box
     var exitBoxCounterElem = document.getElementById('exitBoxCounter_' + index);
     exitBoxCounterElem.innerText = exitBoxCounters[index] + '\n (' + ((exitBoxCounters[index] / ballHits) * 100).toFixed(2) + '%)';
 }
 
-// Function to update all exit box counters
+//Function to update all exit box counters
 function updateAllExitBoxCounters() {
     exitBoxCounters.forEach(function(counter, index) {
         updateExitBoxCounter(index);
     });
 }
 
-// Create and append HTML elements for exit box counters
+//Create HTML elements for exit box counters
 exitBoxCounters.forEach(function(counter, index) {
     var exitBoxCounter = document.createElement('div');
     exitBoxCounter.id = 'exitBoxCounter_' + index;
     exitBoxCounter.style.position = 'absolute';
     exitBoxCounter.style.top = (exitBoxPositions[index].y + exitBoxHeight / 2 + 5) + 'px';
     exitBoxCounter.style.left = (exitBoxPositions[index].x - exitBoxWidth / 2) + 'px';
-    exitBoxCounter.style.color = 'white'; // Set text color to white
-    exitBoxCounter.innerText = exitBoxCounters[index]; // Display only the number of hits
+    exitBoxCounter.style.color = 'white';
+    exitBoxCounter.innerText = exitBoxCounters[index];
     document.body.appendChild(exitBoxCounter);
 
     // Create percentage display below the exit box counter
@@ -222,25 +220,25 @@ exitBoxCounters.forEach(function(counter, index) {
     exitBoxCounter.appendChild(percentageDisplay);
  });
 
-// Add all bodies to the world
+//Add all bodies to the world
 Composite.add(engine.world, [ground]);
 
-// Run the renderer
+//Run the renderer
 Render.run(render);
 
-// Create runner
+//Create a runner
 var runner = Runner.create();
 
-// Run the engine
+//Run the engine
 Runner.run(runner, engine);
 
-// Apply gravity to the balls
+//Apply gravity to the balls
 engine.gravity.y = 0.5;
 
-// Function to update gravity for each ball
+//Function to update gravity for each ball
 function updateBallGravity() {
     balls.forEach(function(ball) {
-        // Determine odds for the ball's gravity
+        //Determine odds for the ball's gravity
         var odds = Math.random(); // Random value between 0 and 1
 
         // Strength of gravity
@@ -271,12 +269,12 @@ Events.on(runner, 'tick', function(event) {
     updateBallGravity();
 });
 
-// Event listener for spacebar press
+//Event listener for spacebar press
 document.addEventListener('keydown', function(event) {
     if (event.code === 'Space') {
         var betAmount = parseFloat(betInput.value);
         if (!isNaN(betAmount) && betAmount > 0 && userBalance >= betAmount) {
-            // Deduct the bet amount from user's balance
+            //Deduct the bet amount from user's balance
             userBalance -= betAmount;
             updateUserBalanceDisplay();
 
@@ -284,30 +282,30 @@ document.addEventListener('keydown', function(event) {
             var ball = Bodies.circle(window.innerWidth / 2, 0, 20, {
                 restitution: 0.5,
                 collisionFilter: { group: ballCollisionGroup },
-                betAmount: betAmount // Add a property to store the bet amount with the ball
+                betAmount: betAmount 
             });
             balls.push(ball); // Add ball to array
             Composite.add(engine.world, ball);
         } else {
-            // Notify user if bet amount is invalid or exceeds balance
+            //Notifys user if bet amount is invalid or exceeds balance
             alert('Invalid bet amount or insufficient balance.');
         }
     }
 });
 
-// Event listener for collisions
+//Event listener for collisions
 Events.on(engine, 'collisionStart', function(event) {
     var pairs = event.pairs;
     pairs.forEach(function(pair) {
-        // Check if a ball collided with the ground
+        //Check if a ball collided with the ground
         if ((pair.bodyA === ground && balls.includes(pair.bodyB)) ||
             (pair.bodyB === ground && balls.includes(pair.bodyA))) {
-            // Remove the ball from both the physics world and the array
+            //Remove the ball from both the physics world and the array
             var ballIndex = balls.indexOf(pair.bodyA);
             if (ballIndex !== -1) {
                 balls.splice(ballIndex, 1);
                 Composite.remove(engine.world, pair.bodyA);
-                // Increment ball hits counter
+                //Increment ball hits counter
                 ballHits++;
                 updateBallHitsCounter();
             }
@@ -315,7 +313,7 @@ Events.on(engine, 'collisionStart', function(event) {
             if (ballIndex !== -1) {
                 balls.splice(ballIndex, 1);
                 Composite.remove(engine.world, pair.bodyB);
-                // Increment ball hits counter
+                //Increment ball hits counter
                 ballHits++;
                 updateBallHitsCounter();
             }
@@ -324,18 +322,18 @@ Events.on(engine, 'collisionStart', function(event) {
     });
 });
 
-// Function to update ball hits counter
+//Function to update ball hits counter
 function updateBallHitsCounter() {
-    // Update the HTML element displaying the ball hits count
+    //Update the HTML element displaying the ball hits count
     document.getElementById('ballHitsCounter').innerText = 'Ball Hits: ' + ballHits;
 }
 
-// Create and append HTML element for ball hits counter
+//Create and append HTML element for ball hits counter
 var ballHitsCounter = document.createElement('div');
 ballHitsCounter.id = 'ballHitsCounter';
 ballHitsCounter.style.position = 'absolute';
 ballHitsCounter.style.top = '20px';
 ballHitsCounter.style.left = '20px';
-ballHitsCounter.style.color = 'white'; // Set text color to white
+ballHitsCounter.style.color = 'white';
 ballHitsCounter.innerText = 'Ball Hits: 0';
 document.body.appendChild(ballHitsCounter);
