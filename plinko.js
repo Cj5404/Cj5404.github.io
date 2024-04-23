@@ -144,34 +144,29 @@ exitBoxPositions.forEach(function(position, index) {
     document.body.appendChild(multiplierText);
 });
 
-//Event listener for exit box collisions 
+// Event listener for exit box collisions 
 Events.on(engine, 'collisionStart', function(event) {
     var pairs = event.pairs;
     pairs.forEach(function(pair) {
-        //Checks if a ball collided with an exit box
         if (pair.bodyA.label === 'ExitBox' && balls.includes(pair.bodyB)) {
-            //Multiply the original bet amount by the multiplier and add it back to user's balance
             userBalance += pair.bodyB.betAmount * pair.bodyA.multiplier;
-            updateUserBalanceDisplay();
+            updateUserBalanceDisplayAnimated(); // Update balance with animation
             removeBall(pair.bodyB);
             var exitBoxIndex = exitBoxes.indexOf(pair.bodyA);
             if (exitBoxIndex !== -1) {
                 exitBoxCounters[exitBoxIndex]++;
             }
         } else if (pair.bodyB.label === 'ExitBox' && balls.includes(pair.bodyA)) {
-            //Multiply the original bet amount by the multiplier and add it back to user's balance
             userBalance += pair.bodyA.betAmount * pair.bodyB.multiplier;
-            updateUserBalanceDisplay();
+            updateUserBalanceDisplayAnimated(); // Update balance with animation
             removeBall(pair.bodyA);
-            //Finds the index of the exit box
             var exitBoxIndex = exitBoxes.indexOf(pair.bodyB);
             if (exitBoxIndex !== -1) {
-                //Increments the counter for the corresponding exit box
                 exitBoxCounters[exitBoxIndex]++;
             }
         }
     });
-    //Update all exit box counters after collision
+    // Update all exit box counters after collision
     updateAllExitBoxCounters();
 });
 
@@ -269,14 +264,14 @@ Events.on(runner, 'tick', function(event) {
     updateBallGravity();
 });
 
-//Event listener for spacebar press
+// Event listener for spacebar press
 document.addEventListener('keydown', function(event) {
     if (event.code === 'Space') {
         var betAmount = parseFloat(betInput.value);
         if (!isNaN(betAmount) && betAmount > 0 && userBalance >= betAmount) {
-            //Deduct the bet amount from user's balance
+            // Deduct the bet amount from user's balance
             userBalance -= betAmount;
-            updateUserBalanceDisplay();
+            updateUserBalanceDisplayAnimated()
 
             // Spawn a new ball at the top center of the screen
             var ball = Bodies.circle(window.innerWidth / 2, 0, 20, {
@@ -293,39 +288,65 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-//Event listener for collisions
+// Event listener for exit box collisions 
 Events.on(engine, 'collisionStart', function(event) {
     var pairs = event.pairs;
     pairs.forEach(function(pair) {
-        //Check if a ball collided with the ground
-        if ((pair.bodyA === ground && balls.includes(pair.bodyB)) ||
-            (pair.bodyB === ground && balls.includes(pair.bodyA))) {
-            //Remove the ball from both the physics world and the array
-            var ballIndex = balls.indexOf(pair.bodyA);
-            if (ballIndex !== -1) {
-                balls.splice(ballIndex, 1);
-                Composite.remove(engine.world, pair.bodyA);
-                //Increment ball hits counter
-                ballHits++;
-                updateBallHitsCounter();
+        if (pair.bodyA.label === 'ExitBox' && balls.includes(pair.bodyB)) {
+            userBalance += pair.bodyB.betAmount * pair.bodyA.multiplier;
+            updateUserBalanceDisplayAnimated(); // Update balance with animation
+            removeBall(pair.bodyB);
+            var exitBoxIndex = exitBoxes.indexOf(pair.bodyA);
+            if (exitBoxIndex !== -1) {
+                exitBoxCounters[exitBoxIndex]++;
             }
-            ballIndex = balls.indexOf(pair.bodyB);
-            if (ballIndex !== -1) {
-                balls.splice(ballIndex, 1);
-                Composite.remove(engine.world, pair.bodyB);
-                //Increment ball hits counter
-                ballHits++;
-                updateBallHitsCounter();
+        } else if (pair.bodyB.label === 'ExitBox' && balls.includes(pair.bodyA)) {
+            userBalance += pair.bodyA.betAmount * pair.bodyB.multiplier;
+            updateUserBalanceDisplayAnimated(); // Update balance with animation
+            removeBall(pair.bodyA);
+            var exitBoxIndex = exitBoxes.indexOf(pair.bodyB);
+            if (exitBoxIndex !== -1) {
+                exitBoxCounters[exitBoxIndex]++;
             }
         }
-
     });
+    // Update all exit box counters after collision
+    updateAllExitBoxCounters();
 });
 
 //Function to update ball hits counter
 function updateBallHitsCounter() {
     //Update the HTML element displaying the ball hits count
     document.getElementById('ballHitsCounter').innerText = 'Ball Hits: ' + ballHits;
+}
+
+// Function to update user balance display with animation
+function updateUserBalanceDisplayAnimated() {
+    var previousBalance = parseFloat(userBalanceDisplay.innerText.split('$')[1]);
+    var currentBalance = userBalance;
+    var difference = currentBalance - previousBalance;
+    var increment = difference / 30; // Adjust the number of frames for the animation
+    var frame = 0;
+    
+    var animationInterval = setInterval(function() {
+        frame++;
+        var newBalance;
+        
+        // Increment balance animation
+        if (difference > 0) {
+            newBalance = previousBalance + (increment * frame);
+        } 
+        // Decrement balance animation
+        else {
+            newBalance = previousBalance - (Math.abs(increment) * frame);
+        }
+        
+        userBalanceDisplay.innerText = 'Balance: $' + newBalance.toFixed(2);
+        
+        if (frame >= 30) { // Adjust based on the number of frames
+            clearInterval(animationInterval);
+        }
+    }, 16); // Adjust based on the frame rate of the animation
 }
 
 //Create and append HTML element for ball hits counter
