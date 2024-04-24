@@ -15,9 +15,52 @@ var render = Render.create({
     engine: engine,
     options: {
         width: window.innerWidth,
-        height: window.innerHeight
+        height: window.innerHeight,
+        wireframes: false, // Render solid shapes instead of wireframes
+        background: '#CCCCCC', // Set background color
     }
 });
+
+var ballTexture = new Image();
+ballTexture.src = 'coin.png'; // Replace 'path/to/your/image.png' with the actual path to your image
+
+// Define ballRenderOptions
+var ballRenderOptions = {
+    sprite: {
+        texture: ballTexture.src, // Set the texture to the loaded image
+        xScale: 0.21, // Scale the image width to fit within the ball
+        yScale: 0.21, // Scale the image height to fit within the ball
+        xOffset: 0, // Offset the image horizontally if necessary
+        yOffset: 0 // Offset the image vertically if necessary
+    },
+    fillStyle: 'transparent', // Set fill style to transparent since sprite will be used
+    strokeStyle: 'black' // Set stroke style to transparent since sprite will be used
+};
+
+
+// Event listener for image load success
+ballTexture.onload = function() {
+    console.log('Image loaded successfully:', ballTexture.src);
+
+    // Create new balls using the updated ballRenderOptions
+    var ball = Bodies.circle(window.innerWidth / 2, 0, 20, {
+        restitution: 0,
+        collisionFilter: { group: ballCollisionGroup },
+        betAmount: betAmount, // Pass the betAmount variable here
+        render: ballRenderOptions // Apply the updated ballRenderOptions
+    });
+
+    balls.push(ball); // Add ball to array
+    Composite.add(engine.world, ball);
+};
+
+// Event listener for image load error
+ballTexture.onerror = function() {
+    console.error('Error loading image:', ballTexture.src);
+};
+
+
+
 
 //Makes the ground
 var ground = Bodies.rectangle(window.innerWidth / 2, window.innerHeight - 20, window.innerWidth, 40, { isStatic: true });
@@ -45,14 +88,28 @@ betInput.placeholder = 'Enter bet amount';
 betInput.style.position = 'absolute';
 betInput.style.top = '50px';
 betInput.style.left = '20px';
+betInput.style.border = 'none'; 
+betInput.style.borderBottom = '3px solid #000000'; 
+betInput.style.borderRadius = '5px'; 
+betInput.style.padding = '5px 10px'; 
+betInput.style.fontSize = '16px'; 
+betInput.style.fontFamily = 'Comic Sans MS, cursive';
+betInput.style.color = '#333'; 
+betInput.style.backgroundColor = '#FFF'; 
+
+
 document.body.appendChild(betInput);
 
+// Create HTML element for user balance display
 var userBalanceDisplay = document.createElement('div');
 userBalanceDisplay.id = 'userBalanceDisplay';
 userBalanceDisplay.style.position = 'absolute';
-userBalanceDisplay.style.top = '80px';
+userBalanceDisplay.style.top = '95px';
 userBalanceDisplay.style.left = '20px';
 userBalanceDisplay.style.color = 'white';
+userBalanceDisplay.style.fontFamily = 'Comic Sans MS, cursive'; // Set the font family to a cartoonish font
+userBalanceDisplay.style.fontSize = '18px'; // Adjust font size as needed
+userBalanceDisplay.style.color = '#4c7d4e'; // Red text color
 userBalanceDisplay.innerText = 'Balance: $' + userBalance.toFixed(2);
 document.body.appendChild(userBalanceDisplay);
 
@@ -142,6 +199,24 @@ exitBoxPositions.forEach(function(position, index) {
     multiplierText.style.fontSize = '12px';
     multiplierText.style.transform = 'translate(-50%, -50%)'; 
     document.body.appendChild(multiplierText);
+});
+
+// Loop through each exit box and update its fill style based on multiplier
+exitBoxes.forEach(function(exitBox, index) {
+    var multiplier = exitBox.multiplier;
+    if (multiplier === 21) {
+        // Cartoonish red for 21x multiplier
+        exitBox.render.fillStyle = '#FF5733';
+    } else if (multiplier === 7.5 || multiplier === 3) {
+        // Cartoonish orange for 7.5x and 3x multipliers
+        exitBox.render.fillStyle = '#FFA500';
+    } else if (multiplier === 3 ) {
+        // Cartoonish soft yellow for 0.9x, 0.22x, and 0.16x multipliers
+        exitBox.render.fillStyle = '#FAD02E';
+    } else {
+        // Cartoonish green for the middle three (1x, 0.9x, and 0.22x) multipliers
+        exitBox.render.fillStyle = '#2ECC71';
+    }
 });
 
 // Event listener for exit box collisions 
@@ -274,11 +349,13 @@ document.addEventListener('keydown', function(event) {
             updateUserBalanceDisplayAnimated()
 
             // Spawn a new ball at the top center of the screen
-            var ball = Bodies.circle(window.innerWidth / 2, 0, 20, {
-                restitution: 0.5,
-                collisionFilter: { group: ballCollisionGroup },
-                betAmount: betAmount 
-            });
+// Spawn a new ball at the top center of the screen
+var ball = Bodies.circle(window.innerWidth / 2, 0, 20, {
+    restitution: 0.5,
+    collisionFilter: { group: ballCollisionGroup },
+    betAmount: betAmount,
+    render: ballRenderOptions // Apply common rendering options
+});
             balls.push(ball); // Add ball to array
             Composite.add(engine.world, ball);
         } else {
