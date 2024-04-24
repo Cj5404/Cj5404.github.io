@@ -216,29 +216,35 @@ exitBoxes.forEach(function(exitBox, index) {
     }
 });
 
-//Event listener for exit box collisions 
+// Event listener for exit box collisions 
 Events.on(engine, 'collisionStart', function(event) {
     var pairs = event.pairs;
     pairs.forEach(function(pair) {
         if (pair.bodyA.label === 'ExitBox' && balls.includes(pair.bodyB)) {
             userBalance += pair.bodyB.betAmount * pair.bodyA.multiplier;
-            updateUserBalanceDisplayAnimated();
+            updateUserBalanceDisplayAnimated(); 
             removeBall(pair.bodyB);
             var exitBoxIndex = exitBoxes.indexOf(pair.bodyA);
             if (exitBoxIndex !== -1) {
                 exitBoxCounters[exitBoxIndex]++;
+                // Update the graph data and redraw the chart
+                chart.data.datasets[0].data = exitBoxCounters;
+                chart.update();
             }
         } else if (pair.bodyB.label === 'ExitBox' && balls.includes(pair.bodyA)) {
             userBalance += pair.bodyA.betAmount * pair.bodyB.multiplier;
-            updateUserBalanceDisplayAnimated();
+            updateUserBalanceDisplayAnimated(); 
             removeBall(pair.bodyA);
             var exitBoxIndex = exitBoxes.indexOf(pair.bodyB);
             if (exitBoxIndex !== -1) {
                 exitBoxCounters[exitBoxIndex]++;
+                // Update the graph data and redraw the chart
+                chart.data.datasets[0].data = exitBoxCounters;
+                chart.update();
             }
         }
     });
-    //Update all exit box counters after collision
+    // Update all exit box counters after collision
     updateAllExitBoxCounters();
 });
 
@@ -396,7 +402,7 @@ function updateUserBalanceDisplayAnimated() {
     var previousBalance = parseFloat(userBalanceDisplay.innerText.split('$')[1]);
     var currentBalance = userBalance;
     var difference = currentBalance - previousBalance;
-    var increment = difference / 30;
+    var increment = difference / 24;
     var frame = 0;
     
     var animationInterval = setInterval(function() {
@@ -414,7 +420,7 @@ function updateUserBalanceDisplayAnimated() {
         
         userBalanceDisplay.innerText = 'Balance: $' + newBalance.toFixed(2);
         
-        if (frame >= 30) {
+        if (frame >= 24) {
             clearInterval(animationInterval);
         }
     }, 16); 
@@ -429,3 +435,53 @@ ballHitsCounter.style.left = '20px';
 ballHitsCounter.style.color = 'white';
 ballHitsCounter.innerText = 'Ball Hits: 0';
 document.body.appendChild(ballHitsCounter);
+
+// Create HTML element for the option button
+var toggleMetricsButton = document.createElement('button');
+toggleMetricsButton.id = 'toggleMetricsButton';
+toggleMetricsButton.innerText = 'Toggle Metrics';
+toggleMetricsButton.style.position = 'absolute';
+toggleMetricsButton.style.top = '140px'; 
+toggleMetricsButton.style.left = '20px';
+toggleMetricsButton.style.padding = '5px 10px';
+toggleMetricsButton.style.fontSize = '16px';
+toggleMetricsButton.style.fontFamily = 'Comic Sans MS, cursive';
+toggleMetricsButton.style.color = '#333';
+toggleMetricsButton.style.backgroundColor = '#FFF';
+toggleMetricsButton.style.border = 'none';
+toggleMetricsButton.style.borderRadius = '5px';
+toggleMetricsButton.addEventListener('click', function() {
+    var exitBoxGraph = document.getElementById('exitBoxGraph');
+    if (exitBoxGraph.style.display === 'none') {
+        exitBoxGraph.style.display = 'block';
+    } else {
+        exitBoxGraph.style.display = 'none';
+    }
+});
+document.body.appendChild(toggleMetricsButton);
+
+/////////////////////////////Graph//////////////////////////
+var ctx = document.getElementById('exitBoxGraph').getContext('2d');
+
+var chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Exit 1', 'Exit 2', 'Exit 3', 'Exit 4', 'Exit 5', 'Exit 6', 'Exit 7', 'Exit 8', 'Exit 9', 'Exit 10', 'Exit 11'],
+        datasets: [{
+            label: 'Ball Landings',
+            data: exitBoxCounters,
+            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        maintainAspectRatio: false,
+        responsive: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
