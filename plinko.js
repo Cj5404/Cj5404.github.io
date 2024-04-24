@@ -1,4 +1,4 @@
-// Module aliases
+//Module aliases
 var Engine = Matter.Engine,
     Render = Matter.Render,
     Runner = Matter.Runner,
@@ -6,55 +6,56 @@ var Engine = Matter.Engine,
     Composite = Matter.Composite,
     Events = Matter.Events;
 
-// Create an engine
+//Create an engine
 var engine = Engine.create();
 
-// Create a renderer
+//Create a renderer
 var render = Render.create({
     element: document.body,
     engine: engine,
     options: {
         width: window.innerWidth,
         height: window.innerHeight,
-        wireframes: false, // Render solid shapes instead of wireframes
-        background: '#CCCCCC', // Set background color
+        wireframes: false, //Render solid shapes instead of wireframes
+        background: '#CCCCCC',
     }
 });
 
 var ballTexture = new Image();
-ballTexture.src = 'coin.png'; // Replace 'path/to/your/image.png' with the actual path to your image
+ballTexture.src = 'coin.png'; 
 
-// Define ballRenderOptions
+
 var ballRenderOptions = {
     sprite: {
-        texture: ballTexture.src, // Set the texture to the loaded image
-        xScale: 0.21, // Scale the image width to fit within the ball
-        yScale: 0.21, // Scale the image height to fit within the ball
-        xOffset: 0, // Offset the image horizontally if necessary
-        yOffset: 0 // Offset the image vertically if necessary
+        //Set the texture to the loaded image
+        texture: ballTexture.src,
+        xScale: 0.21, 
+        yScale: 0.21, 
+        xOffset: 0,
+        yOffset: 0
     },
-    fillStyle: 'transparent', // Set fill style to transparent since sprite will be used
-    strokeStyle: 'black' // Set stroke style to transparent since sprite will be used
+    //Sets fill style to transparent since sprite will be used
+    fillStyle: 'transparent', 
+    strokeStyle: 'black' 
 };
 
 
-// Event listener for image load success
+//Event listener for image load success
 ballTexture.onload = function() {
     console.log('Image loaded successfully:', ballTexture.src);
 
-    // Create new balls using the updated ballRenderOptions
     var ball = Bodies.circle(window.innerWidth / 2, 0, 20, {
         restitution: 0,
         collisionFilter: { group: ballCollisionGroup },
-        betAmount: betAmount, // Pass the betAmount variable here
-        render: ballRenderOptions // Apply the updated ballRenderOptions
+        betAmount: betAmount, 
+        render: ballRenderOptions
     });
 
-    balls.push(ball); // Add ball to array
+    balls.push(ball);
     Composite.add(engine.world, ball);
 };
 
-// Event listener for image load error
+//Event listener for image load error
 ballTexture.onerror = function() {
     console.error('Error loading image:', ballTexture.src);
 };
@@ -100,16 +101,16 @@ betInput.style.backgroundColor = '#FFF';
 
 document.body.appendChild(betInput);
 
-// Create HTML element for user balance display
+//Creates HTML element for user balance display
 var userBalanceDisplay = document.createElement('div');
 userBalanceDisplay.id = 'userBalanceDisplay';
 userBalanceDisplay.style.position = 'absolute';
 userBalanceDisplay.style.top = '95px';
 userBalanceDisplay.style.left = '20px';
 userBalanceDisplay.style.color = 'white';
-userBalanceDisplay.style.fontFamily = 'Comic Sans MS, cursive'; // Set the font family to a cartoonish font
-userBalanceDisplay.style.fontSize = '18px'; // Adjust font size as needed
-userBalanceDisplay.style.color = '#4c7d4e'; // Red text color
+userBalanceDisplay.style.fontFamily = 'Comic Sans MS, cursive';
+userBalanceDisplay.style.fontSize = '18px';
+userBalanceDisplay.style.color = '#4c7d4e';
 userBalanceDisplay.innerText = 'Balance: $' + userBalance.toFixed(2);
 document.body.appendChild(userBalanceDisplay);
 
@@ -160,7 +161,7 @@ for (var row = 0; row < numRows; row++) {
     });
 }
 
-// Create separate boxes for counting hits under each exit of the pegs
+//Create separate boxes for counting hits under each exit of the pegs
 var exitBoxes = [];
 var exitBoxWidth = 50;
 var exitBoxHeight = 20;
@@ -201,31 +202,27 @@ exitBoxPositions.forEach(function(position, index) {
     document.body.appendChild(multiplierText);
 });
 
-// Loop through each exit box and update its fill style based on multiplier
+//Loop through each exit box and update its fill style based on multiplier
 exitBoxes.forEach(function(exitBox, index) {
     var multiplier = exitBox.multiplier;
     if (multiplier === 21) {
-        // Cartoonish red for 21x multiplier
         exitBox.render.fillStyle = '#FF5733';
     } else if (multiplier === 7.5 || multiplier === 3) {
-        // Cartoonish orange for 7.5x and 3x multipliers
         exitBox.render.fillStyle = '#FFA500';
     } else if (multiplier === 3 ) {
-        // Cartoonish soft yellow for 0.9x, 0.22x, and 0.16x multipliers
         exitBox.render.fillStyle = '#FAD02E';
     } else {
-        // Cartoonish green for the middle three (1x, 0.9x, and 0.22x) multipliers
         exitBox.render.fillStyle = '#2ECC71';
     }
 });
 
-// Event listener for exit box collisions 
+//Event listener for exit box collisions 
 Events.on(engine, 'collisionStart', function(event) {
     var pairs = event.pairs;
     pairs.forEach(function(pair) {
         if (pair.bodyA.label === 'ExitBox' && balls.includes(pair.bodyB)) {
             userBalance += pair.bodyB.betAmount * pair.bodyA.multiplier;
-            updateUserBalanceDisplayAnimated(); // Update balance with animation
+            updateUserBalanceDisplayAnimated();
             removeBall(pair.bodyB);
             var exitBoxIndex = exitBoxes.indexOf(pair.bodyA);
             if (exitBoxIndex !== -1) {
@@ -233,7 +230,7 @@ Events.on(engine, 'collisionStart', function(event) {
             }
         } else if (pair.bodyB.label === 'ExitBox' && balls.includes(pair.bodyA)) {
             userBalance += pair.bodyA.betAmount * pair.bodyB.multiplier;
-            updateUserBalanceDisplayAnimated(); // Update balance with animation
+            updateUserBalanceDisplayAnimated();
             removeBall(pair.bodyA);
             var exitBoxIndex = exitBoxes.indexOf(pair.bodyB);
             if (exitBoxIndex !== -1) {
@@ -241,7 +238,7 @@ Events.on(engine, 'collisionStart', function(event) {
             }
         }
     });
-    // Update all exit box counters after collision
+    //Update all exit box counters after collision
     updateAllExitBoxCounters();
 });
 
@@ -252,7 +249,6 @@ function removeBall(ball) {
     if (ballIndex !== -1) {
         balls.splice(ballIndex, 1);
         Composite.remove(engine.world, ball);
-        // Increment ball hits counter
         ballHits++;
         updateBallHitsCounter();
     }
@@ -283,7 +279,7 @@ exitBoxCounters.forEach(function(counter, index) {
     exitBoxCounter.innerText = exitBoxCounters[index];
     document.body.appendChild(exitBoxCounter);
 
-    // Create percentage display below the exit box counter
+    //Create percentage display below the exit box counter
     var percentageDisplay = document.createElement('div');
     percentageDisplay.style.color = 'white';
     percentageDisplay.innerText = '(' + ((exitBoxCounters[index] / ballHits) * 100).toFixed(2) + '%)';
@@ -311,52 +307,50 @@ function updateBallGravity() {
         //Determine odds for the ball's gravity
         var odds = Math.random(); // Random value between 0 and 1
 
-        // Strength of gravity
-        var gravityStrength = 0.001; // Base strength
+        //Strength of gravity
+        var gravityStrength = 0.001; //Base strength
         if (odds < 0.9) {
-            gravityStrength *= 0.5; // Increase strength for lower odds
+            gravityStrength *= 0.5; //Increase strength for lower odds
         } else if (odds < 1) {
-            gravityStrength *= 1; // Increase strength for moderate odds
+            gravityStrength *= 1; //Increase strength for moderate odds
         }
 
-        // Direction of gravity
-        var gravityX = 0; // Initialize gravity along X-axis
+        //Direction of gravity
+        var gravityX = 0; 
         if (Math.random() < 0.5) {
-            // Apply rightward gravity, biased towards the lower multiplier areas
-            gravityX = gravityStrength * (Math.random() * 0.02); // Bias towards the center
+            //Applys rightward gravity, biased towards the lower multiplier areas
+            gravityX = gravityStrength * (Math.random() * 0.02); 
         } else {
-            // Apply leftward gravity, biased towards the lower multiplier areas
-            gravityX = -gravityStrength * (Math.random() * 0.02); // Bias towards the center
+            //Applys leftward gravity, biased towards the lower multiplier areas
+            gravityX = -gravityStrength * (Math.random() * 0.02); 
         }
 
-        // Apply customized gravity to the engine
         engine.gravity.x = gravityX;
     });
 }
 
-// Update gravity for each ball continuously
+//Update gravity for each ball continuously
 Events.on(runner, 'tick', function(event) {
     updateBallGravity();
 });
 
-// Event listener for spacebar press
+//Event listener for spacebar press
 document.addEventListener('keydown', function(event) {
     if (event.code === 'Space') {
         var betAmount = parseFloat(betInput.value);
         if (!isNaN(betAmount) && betAmount > 0 && userBalance >= betAmount) {
-            // Deduct the bet amount from user's balance
+            //Deduct the bet amount from user's balance
             userBalance -= betAmount;
             updateUserBalanceDisplayAnimated()
 
-            // Spawn a new ball at the top center of the screen
-// Spawn a new ball at the top center of the screen
+//Spawn a new ball at the top center of the screen
 var ball = Bodies.circle(window.innerWidth / 2, 0, 20, {
     restitution: 0.5,
     collisionFilter: { group: ballCollisionGroup },
     betAmount: betAmount,
-    render: ballRenderOptions // Apply common rendering options
+    render: ballRenderOptions //Applys common rendering options
 });
-            balls.push(ball); // Add ball to array
+            balls.push(ball); 
             Composite.add(engine.world, ball);
         } else {
             //Notifys user if bet amount is invalid or exceeds balance
@@ -371,7 +365,7 @@ Events.on(engine, 'collisionStart', function(event) {
     pairs.forEach(function(pair) {
         if (pair.bodyA.label === 'ExitBox' && balls.includes(pair.bodyB)) {
             userBalance += pair.bodyB.betAmount * pair.bodyA.multiplier;
-            updateUserBalanceDisplayAnimated(); // Update balance with animation
+            updateUserBalanceDisplayAnimated(); 
             removeBall(pair.bodyB);
             var exitBoxIndex = exitBoxes.indexOf(pair.bodyA);
             if (exitBoxIndex !== -1) {
@@ -379,7 +373,7 @@ Events.on(engine, 'collisionStart', function(event) {
             }
         } else if (pair.bodyB.label === 'ExitBox' && balls.includes(pair.bodyA)) {
             userBalance += pair.bodyA.betAmount * pair.bodyB.multiplier;
-            updateUserBalanceDisplayAnimated(); // Update balance with animation
+            updateUserBalanceDisplayAnimated(); 
             removeBall(pair.bodyA);
             var exitBoxIndex = exitBoxes.indexOf(pair.bodyB);
             if (exitBoxIndex !== -1) {
@@ -387,7 +381,7 @@ Events.on(engine, 'collisionStart', function(event) {
             }
         }
     });
-    // Update all exit box counters after collision
+    //Update all exit box counters after collision
     updateAllExitBoxCounters();
 });
 
@@ -397,33 +391,33 @@ function updateBallHitsCounter() {
     document.getElementById('ballHitsCounter').innerText = 'Ball Hits: ' + ballHits;
 }
 
-// Function to update user balance display with animation
+//Function to update user balance display with animation
 function updateUserBalanceDisplayAnimated() {
     var previousBalance = parseFloat(userBalanceDisplay.innerText.split('$')[1]);
     var currentBalance = userBalance;
     var difference = currentBalance - previousBalance;
-    var increment = difference / 30; // Adjust the number of frames for the animation
+    var increment = difference / 30;
     var frame = 0;
     
     var animationInterval = setInterval(function() {
         frame++;
         var newBalance;
         
-        // Increment balance animation
+        //Increment balance animation
         if (difference > 0) {
             newBalance = previousBalance + (increment * frame);
         } 
-        // Decrement balance animation
+        //Decrement balance animation
         else {
             newBalance = previousBalance - (Math.abs(increment) * frame);
         }
         
         userBalanceDisplay.innerText = 'Balance: $' + newBalance.toFixed(2);
         
-        if (frame >= 30) { // Adjust based on the number of frames
+        if (frame >= 30) {
             clearInterval(animationInterval);
         }
-    }, 16); // Adjust based on the frame rate of the animation
+    }, 16); 
 }
 
 //Create and append HTML element for ball hits counter
